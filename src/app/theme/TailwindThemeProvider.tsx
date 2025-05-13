@@ -1,8 +1,6 @@
 'use client';
 
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
-import { lightTheme, darkTheme } from './theme';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -18,7 +16,7 @@ const ThemeContext = createContext<ThemeContextType>({
 
 export const useTheme = () => useContext(ThemeContext);
 
-export default function ThemeProvider({ children }: { children: ReactNode }) {
+export default function TailwindThemeProvider({ children }: { children: ReactNode }) {
   // Get saved theme preference from localStorage or use system preference
   const [mode, setMode] = useState<ThemeMode>('light');
   
@@ -30,33 +28,34 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
       if (savedMode) {
         setMode(savedMode);
       } else {
-        // Use system preference
-        const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        setMode(prefersDarkMode ? 'dark' : 'light');
+        // Use system preference as default
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setMode(prefersDark ? 'dark' : 'light');
       }
     }
   }, []);
 
-  // Toggle between light and dark modes
-  const toggleTheme = () => {
-    const newMode = mode === 'light' ? 'dark' : 'light';
-    setMode(newMode);
+  useEffect(() => {
+    // Apply the theme class to the document element for Tailwind dark mode
+    if (mode === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
     
     // Save preference to localStorage
     if (typeof window !== 'undefined') {
-      localStorage.setItem('theme-mode', newMode);
+      localStorage.setItem('theme-mode', mode);
     }
-  };
+  }, [mode]);
 
-  // Use the appropriate theme based on mode
-  const theme = mode === 'light' ? lightTheme : darkTheme;
+  const toggleTheme = () => {
+    setMode(prevMode => (prevMode === 'light' ? 'dark' : 'light'));
+  };
 
   return (
     <ThemeContext.Provider value={{ mode, toggleTheme }}>
-      <MuiThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </MuiThemeProvider>
+      {children}
     </ThemeContext.Provider>
   );
 }

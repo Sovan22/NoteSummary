@@ -1,55 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Paper,
-  Tabs,
-  Tab,
-  Alert,
-  Button,
-  Fade,
-  Grow,
-  useTheme,
-  CircularProgress
-} from '@mui/material';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import LinkIcon from '@mui/icons-material/Link';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import Layout from '../components/layout/Layout';
-
-// Import correct paths to the components
+import { 
+  Upload as UploadIcon, 
+  Link as LinkIcon, 
+  Sparkles, 
+  CheckCircle,
+  Loader2
+} from 'lucide-react';
+import AppLayout from '../components/layout/AppLayout';
 import UploaderComponent from '../components/upload/UploaderComponent';
-import URLInputComponent from '../components/upload/URLInputComponent';
-import SummaryView from '../components/summary/SummaryView';
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`upload-tabpanel-${index}`}
-      aria-labelledby={`upload-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ py: 3 }}>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
-}
 
 export default function UploadPage() {
   const [activeTab, setActiveTab] = useState(0);
@@ -57,16 +17,11 @@ export default function UploadPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isProcessed, setIsProcessed] = useState(false);
   const [isPageLoaded, setIsPageLoaded] = useState(false);
-  const theme = useTheme();
 
   // Animate page load
   useEffect(() => {
     setIsPageLoaded(true);
   }, []);
-
-  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
 
   // Simulate file upload process
   const handleFileSelect = () => {
@@ -92,273 +47,207 @@ export default function UploadPage() {
   };
 
   return (
-    <Layout>
-      <Container maxWidth="lg" sx={{ pb: 6 }}>
-        <Fade in={isPageLoaded} timeout={800}>
-          <Box>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                mb: 4,
-                borderRadius: 2,
-                background: (theme) => 
-                  `linear-gradient(135deg, ${theme.palette.primary.main}15, ${theme.palette.primary.main}05)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: 2
-              }}
+    <AppLayout title="Upload Content">
+      <div className="container mx-auto">
+        <div className="flex flex-col">
+          {/* Page header */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">Upload Content</h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Upload files or paste URLs to generate AI-powered summaries, flashcards, and learning materials.
+            </p>
+          </div>
+          
+          {/* Tab navigation */}
+          <div className="flex items-center border-b border-gray-200 dark:border-gray-700 mb-6">
+            <button
+              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${
+                activeTab === 0
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
+              onClick={() => setActiveTab(0)}
             >
-              <Box>
-                <Typography variant="h4" fontWeight={700} gutterBottom>
-                  Upload Content
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Upload or link content for AI analysis and insights
-                </Typography>
-              </Box>
-              
-              <Box
-                sx={{
-                  width: { xs: 60, md: 80 },
-                  height: { xs: 60, md: 80 },
-                  borderRadius: '50%',
-                  backgroundColor: 'background.paper',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: 2,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    width: '150%',
-                    height: '150%',
-                    background: 'radial-gradient(circle, rgba(103,80,164,0.1) 0%, rgba(103,80,164,0) 70%)',
-                    animation: 'pulse 2s infinite',
-                    '@keyframes pulse': {
-                      '0%': { opacity: 0.6, transform: 'scale(0.8)' },
-                      '50%': { opacity: 1, transform: 'scale(1)' },
-                      '100%': { opacity: 0.6, transform: 'scale(0.8)' },
-                    },
-                  },
-                }}
-              >
-                {isProcessed ? (
-                  <AutoAwesomeIcon 
-                    color="primary" 
-                    sx={{ 
-                      fontSize: { xs: 30, md: 40 },
-                      animation: 'float 3s ease-in-out infinite',
-                      '@keyframes float': {
-                        '0%, 100%': { transform: 'translateY(0)' },
-                        '50%': { transform: 'translateY(-5px)' },
-                      },
-                    }} 
-                  />
-                ) : activeTab === 0 ? (
-                  <CloudUploadIcon 
-                    color="primary" 
-                    sx={{ 
-                      fontSize: { xs: 30, md: 40 },
-                      animation: 'fadeInUp 1s ease-out',
-                      '@keyframes fadeInUp': {
-                        from: { opacity: 0, transform: 'translateY(10px)' },
-                        to: { opacity: 1, transform: 'translateY(0)' },
-                      },
-                    }} 
-                  />
-                ) : (
-                  <LinkIcon 
-                    color="primary" 
-                    sx={{ 
-                      fontSize: { xs: 30, md: 40 },
-                      animation: 'fadeInUp 1s ease-out',
-                    }} 
-                  />
-                )}
-              </Box>
-            </Paper>
-          </Box>
-        </Fade>
-        
-        {!isProcessed && (
-          <Grow in={isPageLoaded && !isProcessed} timeout={1000}>
-            <Paper 
-              elevation={2} 
-              sx={{ 
-                borderRadius: 2,
-                overflow: 'hidden',
-                mb: 4,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.07)'
-                }
-              }}
-            >
-              <Tabs 
-                value={activeTab} 
-                onChange={handleTabChange}
-                sx={{
-                  borderBottom: 1,
-                  borderColor: 'divider',
-                  backgroundColor: theme.palette.background.paper,
-                  '& .MuiTabs-indicator': {
-                    height: 4,
-                    borderRadius: '4px 4px 0 0',
-                  },
-                  '& .MuiTab-root': {
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    fontSize: 16,
-                    py: 2,
-                    transition: 'all 0.3s ease',
-                  },
-                }}
-              >
-                <Tab 
-                  label="File Upload" 
-                  icon={<CloudUploadIcon />}
-                  iconPosition="start"
-                  sx={{
-                    minHeight: 64,
-                    transition: 'background-color 0.3s ease',
-                    '&.Mui-selected': {
-                      color: 'primary.main',
-                    },
-                  }}
-                />
-                <Tab 
-                  label="URL / Link" 
-                  icon={<LinkIcon />}
-                  iconPosition="start"
-                  sx={{
-                    minHeight: 64,
-                    transition: 'background-color 0.3s ease',
-                    '&.Mui-selected': {
-                      color: 'primary.main',
-                    },
-                  }}
-                />
-              </Tabs>
-              
-              <Box sx={{ p: { xs: 2, sm: 3 } }}>
-                <Fade key={activeTab} in={true} timeout={500}>
-                  <Box>
-                    <TabPanel value={activeTab} index={0}>
-                      <UploaderComponent onFileSelect={handleFileSelect} />
-                    </TabPanel>
-                    <TabPanel value={activeTab} index={1}>
-                      <URLInputComponent 
-                        onURLValidated={(isValid) => setIsUploaded(isValid)}
-                        onURLSubmit={handleStartProcessing}
-                      />
-                    </TabPanel>
-                  </Box>
-                </Fade>
-              </Box>
-              
-              {isUploaded && !isProcessing && !isProcessed && activeTab === 0 && (
-                <Box sx={{ p: 3, borderTop: '1px solid', borderColor: 'divider' }}>
-                  <Grow in={isUploaded && !isProcessing && !isProcessed} timeout={500}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Alert 
-                        severity="success" 
-                        sx={{ 
-                          borderRadius: 2,
-                          flex: 1,
-                          animation: 'slideInLeft 0.5s ease-out',
-                          '@keyframes slideInLeft': {
-                            from: { opacity: 0, transform: 'translateX(-20px)' },
-                            to: { opacity: 1, transform: 'translateX(0)' },
-                          },
-                        }}
-                      >
-                        File uploaded successfully! Ready for AI processing.
-                      </Alert>
-                      
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleStartProcessing}
-                        sx={{
-                          ml: 2,
-                          borderRadius: 2,
-                          px: 3,
-                          py: 1.2,
-                          animation: 'pulse 1.5s infinite',
-                          '@keyframes pulse': {
-                            '0%': { boxShadow: '0 0 0 0 rgba(103, 80, 164, 0.4)' },
-                            '70%': { boxShadow: '0 0 0 10px rgba(103, 80, 164, 0)' },
-                            '100%': { boxShadow: '0 0 0 0 rgba(103, 80, 164, 0)' },
-                          }
-                        }}
-                      >
-                        Process with AI
-                      </Button>
-                    </Box>
-                  </Grow>
-                </Box>
-              )}
-              
-              {isProcessing && (
-                <Box sx={{ p: 3, borderTop: '1px solid', borderColor: 'divider' }}>
-                  <Fade in={isProcessing} timeout={500}>
-                    <Alert 
-                      severity="info" 
-                      sx={{ 
-                        borderRadius: 2,
-                        animation: 'pulse 2s infinite',
-                        '@keyframes pulse': {
-                          '0%': { boxShadow: '0 0 0 0 rgba(33, 150, 243, 0.4)' },
-                          '70%': { boxShadow: '0 0 0 10px rgba(33, 150, 243, 0)' },
-                          '100%': { boxShadow: '0 0 0 0 rgba(33, 150, 243, 0)' },
-                        }
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <CircularProgress size={20} thickness={5} />
-                        AI is analyzing your content. This might take a few moments...
-                      </Box>
-                    </Alert>
-                  </Fade>
-                </Box>
-              )}
-            </Paper>
-          </Grow>
-        )}
-        
-        {/* AI Generated Summary */}
-        {isProcessed && (
-          <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Button
-                variant="outlined"
-                onClick={handleReset}
-                sx={{
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  borderWidth: 2,
-                  '&:hover': {
-                    borderWidth: 2,
-                  }
-                }}
-              >
-                Upload Another File
-              </Button>
-            </Box>
+              <UploadIcon className="w-4 h-4" />
+              <span>File Upload</span>
+            </button>
             
-            <Grow in={isProcessed} timeout={800}>
-              <Box>
-                <SummaryView />
-              </Box>
-            </Grow>
-          </Box>
-        )}
-      </Container>
-    </Layout>
+            <button
+              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${
+                activeTab === 1
+                  ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
+              onClick={() => setActiveTab(1)}
+            >
+              <LinkIcon className="w-4 h-4" />
+              <span>URL / Link</span>
+            </button>
+            
+            <button
+              className={`px-4 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${
+                activeTab === 2
+                  ? 'border-amber-500 text-amber-600 dark:text-amber-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
+              onClick={() => setActiveTab(2)}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>AI-Generated</span>
+            </button>
+          </div>
+          
+          {/* Tab content */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm">
+            {/* File Upload Panel */}
+            <div className={activeTab === 0 ? 'block' : 'hidden'}>
+              {isProcessed ? (
+                <div className="flex flex-col items-center text-center py-8">
+                  <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center mb-4">
+                    <CheckCircle className="w-8 h-8 text-green-500 dark:text-green-400" />
+                  </div>
+                  <h3 className="text-xl font-medium text-gray-800 dark:text-gray-200 mb-2">Processing Complete!</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-md">
+                    Your file has been successfully processed. You can now access the generated content.
+                  </p>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={handleReset}
+                      className="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Upload Another
+                    </button>
+                    <button 
+                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium transition-colors"
+                    >
+                      View Results
+                    </button>
+                  </div>
+                </div>
+              ) : isUploaded && !isProcessing ? (
+                <div className="flex flex-col items-center text-center py-8">
+                  <h3 className="text-xl font-medium text-gray-800 dark:text-gray-200 mb-6">Ready to process</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-md">
+                    Your file has been uploaded and is ready for processing. Click the button below to start generating AI content.
+                  </p>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={handleReset}
+                      className="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={handleStartProcessing}
+                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium transition-colors flex items-center gap-2"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Process with AI
+                    </button>
+                  </div>
+                </div>
+              ) : isProcessing ? (
+                <div className="flex flex-col items-center text-center py-8">
+                  <div className="w-16 h-16 flex items-center justify-center mb-4">
+                    <Loader2 className="w-8 h-8 text-blue-500 dark:text-blue-400 animate-spin" />
+                  </div>
+                  <h3 className="text-xl font-medium text-gray-800 dark:text-gray-200 mb-2">Processing Your Content</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-md">
+                    Our AI is analyzing your content to generate summaries, flashcards, and key points.
+                  </p>
+                  <div className="w-full max-w-md bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mb-1">
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+              ) : (
+                <UploaderComponent 
+                  onFileSelect={handleFileSelect}
+                  onUploadComplete={() => setIsUploaded(true)}
+                />
+              )}
+            </div>
+            
+            {/* URL Input Panel */}
+            <div className={activeTab === 1 ? 'block' : 'hidden'}>
+              <div className="flex flex-col">
+                <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Add content from a URL</h3>
+                <div className="mb-6">
+                  <div className="flex">
+                    <input 
+                      type="text"
+                      placeholder="Enter a URL (e.g., https://example.com/article)"
+                      className="flex-1 p-3 rounded-l-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button className="px-4 py-2 rounded-r-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors">
+                      Process
+                    </button>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    Supported sources: Articles, blog posts, news sites, and educational content
+                  </p>
+                </div>
+                
+                <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/10 text-blue-800 dark:text-blue-300 text-sm">
+                  <p className="font-medium mb-1">Tips for URL processing:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Make sure the URL is accessible (not behind a login)</li>
+                    <li>For best results, use URLs that lead directly to the content</li>
+                    <li>Academic papers and articles work best</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            {/* AI Generated Panel */}
+            <div className={activeTab === 2 ? 'block' : 'hidden'}>
+              <div className="flex flex-col">
+                <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Generate AI content</h3>
+                <div className="mb-6">
+                  <div className="flex flex-col">
+                    <label className="mb-2 text-sm text-gray-700 dark:text-gray-300">
+                      Topic or subject
+                    </label>
+                    <input 
+                      type="text"
+                      placeholder="E.g., Quantum physics, Machine learning, World War II"
+                      className="p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                    />
+                    
+                    <label className="mb-2 text-sm text-gray-700 dark:text-gray-300">
+                      Additional details (optional)
+                    </label>
+                    <textarea 
+                      placeholder="Add specific aspects you want to cover, any particular focus areas, or educational level"
+                      rows={4}
+                      className="p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                    ></textarea>
+                    
+                    <div className="flex items-center gap-3 mt-2">
+                      <button className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium transition-colors flex items-center gap-2">
+                        <Sparkles className="w-4 h-4" />
+                        Generate Content
+                      </button>
+                      
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        AI will create summaries, flashcards, and learning materials
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/10 text-amber-800 dark:text-amber-300 text-sm">
+                  <p className="font-medium mb-1">About AI-generated content:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>AI content is created for educational purposes</li>
+                    <li>Always verify important information from reliable sources</li>
+                    <li>For academic work, use AI content as a starting point for your research</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </AppLayout>
   );
 }

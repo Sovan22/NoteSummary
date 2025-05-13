@@ -2,35 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  Box, 
-  Paper, 
-  TextField, 
-  Button, 
-  Typography, 
-  Chip,
-  IconButton,
-  CircularProgress,
-  Fade,
-  Grow,
-  Alert,
-  Collapse
-} from '@mui/material';
-import LinkIcon from '@mui/icons-material/Link';
-import YouTubeIcon from '@mui/icons-material/YouTube';
-import ArticleIcon from '@mui/icons-material/Article';
-import ClearIcon from '@mui/icons-material/Clear';
-import SendIcon from '@mui/icons-material/Send';
-import InsertLinkIcon from '@mui/icons-material/InsertLink';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PreviewIcon from '@mui/icons-material/Preview';
-import ContentPasteIcon from '@mui/icons-material/ContentPaste';
+  Link,
+  Globe, 
+  Youtube, 
+  FileText, 
+  X, 
+  Send, 
+  ExternalLink, 
+  CheckCircle, 
+  Eye, 
+  Clipboard
+} from 'lucide-react';
 
 interface URLPreview {
   title: string;
   description: string;
   imageUrl?: string;
+  type: 'article' | 'video' | 'other';
   source: string;
-  type: 'youtube' | 'article' | 'webpage';
 }
 
 interface URLInputComponentProps {
@@ -43,489 +32,289 @@ export default function URLInputComponent({
   onURLValidated
 }: URLInputComponentProps) {
   const [url, setUrl] = useState('');
-  const [isValidating, setIsValidating] = useState(false);
-  const [isValidURL, setIsValidURL] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [isValid, setIsValid] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [urlType, setUrlType] = useState<'youtube' | 'article' | 'webpage' | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [recentURLs, setRecentURLs] = useState<string[]>([]);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Mock URL preview - in a real app, this would come from your backend
   const [preview, setPreview] = useState<URLPreview | null>(null);
-  
-  // Validate URL when it changes
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (url) {
-        validateURL(url);
-      } else {
-        setIsValidURL(false);
-        setUrlType(null);
-        setValidationError(null);
-        if (onURLValidated) {
-          onURLValidated(false, '');
+    // Validate URL
+    const validateURL = () => {
+      if (!url) {
+        setIsValid(false);
+        onURLValidated?.(false, '');
+        return;
+      }
+
+      try {
+        // Check if it's a valid URL format
+        const urlObj = new URL(url);
+        // Only http/https protocols are valid
+        if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+          setIsValid(false);
+          setError('Only HTTP and HTTPS URLs are supported');
+          onURLValidated?.(false, url);
+          return;
         }
+        
+        setIsValid(true);
+        setError(null);
+        onURLValidated?.(true, url);
+      } catch (err) {
+        setIsValid(false);
+        setError('Please enter a valid URL');
+        onURLValidated?.(false, url);
       }
-    }, 500); // Debounce
-    
-    return () => clearTimeout(timer);
-  }, [url]);
-  
-  // URL validation helper
-  const validateURL = (input: string) => {
-    setIsValidating(true);
-    setValidationError(null);
-    
-    try {
-      // Check if it's a valid URL
-      const urlObj = new URL(input);
-      
-      if (!urlObj.protocol.startsWith('http')) {
-        throw new Error('URL must start with http:// or https://');
-      }
-      
-      // Identify URL type
-      if (urlObj.hostname.includes('youtube.com') || urlObj.hostname.includes('youtu.be')) {
-        setUrlType('youtube');
-      } else if (
-        urlObj.hostname.includes('medium.com') || 
-        urlObj.pathname.endsWith('.pdf') || 
-        urlObj.pathname.endsWith('.doc') || 
-        urlObj.pathname.endsWith('.docx')
-      ) {
-        setUrlType('article');
-      } else {
-        setUrlType('webpage');
-      }
-      
-      setIsValidURL(true);
-      
-      if (onURLValidated) {
-        onURLValidated(true, input);
-      }
-    } catch (e) {
-      setIsValidURL(false);
-      setUrlType(null);
-      setValidationError('Please enter a valid URL starting with http:// or https://');
-      
-      if (onURLValidated) {
-        onURLValidated(false, input);
-      }
-    }
-    
-    setIsValidating(false);
+    };
+
+    validateURL();
+  }, [url, onURLValidated]);
+
+  const handleURLChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUrl(e.target.value);
+    setShowPreview(false);
+    setSuccessMessage(null);
   };
-  
-  // Generate URL preview
-  const generatePreview = () => {
-    if (!isValidURL || !url) return;
+
+  const fetchURLPreview = () => {
+    if (!isValid) return;
     
     setIsProcessing(true);
+    setError(null);
     
-    // Simulate API call to get URL preview
+    // Simulate API call to fetch URL preview
     setTimeout(() => {
-      // Mock preview data based on URL type
-      const mockPreviews = {
-        youtube: {
-          title: 'Understanding Neural Networks - Deep Learning Fundamentals',
-          description: 'Learn the basics of neural networks, activation functions, and backpropagation in this comprehensive tutorial.',
-          imageUrl: 'https://picsum.photos/seed/neural/400/225',
-          source: 'YouTube',
-          type: 'youtube' as const
-        },
-        article: {
-          title: 'The Future of Artificial Intelligence in Education',
-          description: 'This article explores how AI is transforming educational systems around the world, with case studies and expert insights.',
-          imageUrl: 'https://picsum.photos/seed/article/400/200',
-          source: 'Medium',
-          type: 'article' as const
-        },
-        webpage: {
-          title: 'Complete Guide to Modern JavaScript Practices',
-          description: 'Explore the latest JavaScript features, best practices, and optimization techniques for modern web development.',
-          imageUrl: 'https://picsum.photos/seed/webpage/400/200',
-          source: url.split('/')[2], // Domain as source
-          type: 'webpage' as const
-        }
+      // This is a mock implementation - in a real app, this would be an API call
+      const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
+      const isArticle = url.includes('medium.com') || url.includes('wikipedia.org') || url.includes('blog');
+      
+      // Create a mock preview based on URL type
+      const mockPreview: URLPreview = {
+        title: isYouTube 
+          ? 'How to Master JavaScript in 2025' 
+          : isArticle 
+            ? 'Modern Web Development Techniques' 
+            : 'Website Content',
+        description: isYouTube 
+          ? 'A comprehensive guide to JavaScript best practices, new features, and performance optimization techniques for 2025.' 
+          : isArticle 
+            ? 'This article covers the latest trends in web development, including serverless architecture, AI integration, and performance optimization.' 
+            : 'Content from the provided URL',
+        imageUrl: isYouTube 
+          ? 'https://example.com/youtube-thumbnail.jpg' 
+          : isArticle 
+            ? 'https://example.com/article-image.jpg' 
+            : undefined,
+        type: isYouTube ? 'video' : isArticle ? 'article' : 'other',
+        source: new URL(url).hostname
       };
       
-      // Set preview based on URL type
-      if (urlType) {
-        setPreview(mockPreviews[urlType]);
-        setShowPreview(true);
-      }
-      
+      setPreview(mockPreview);
+      setShowPreview(true);
       setIsProcessing(false);
+      
+      // Add to recent URLs if not already present
+      if (!recentURLs.includes(url)) {
+        setRecentURLs(prev => [url, ...prev].slice(0, 5));
+      }
     }, 1500);
   };
-  
-  // Handle URL submission
-  const handleSubmit = () => {
-    if (!isValidURL || !url || !preview) return;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    // Call the callback if provided
-    if (onURLSubmit) {
-      onURLSubmit(url, preview);
+    if (!isValid) return;
+    
+    if (!preview) {
+      fetchURLPreview();
+      return;
     }
     
-    // Reset form after submission
+    // Submit the URL and its preview
+    onURLSubmit?.(url, preview);
     setUrl('');
-    setIsValidURL(false);
-    setUrlType(null);
-    setShowPreview(false);
     setPreview(null);
-  };
-  
-  // Handle URL reset
-  const handleReset = () => {
-    setUrl('');
-    setIsValidURL(false);
-    setUrlType(null);
     setShowPreview(false);
-    setPreview(null);
-    setValidationError(null);
+    setSuccessMessage('URL has been successfully processed');
+    
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      setSuccessMessage(null);
+    }, 3000);
   };
-  
-  // Handle paste from clipboard
+
   const handlePaste = async () => {
     try {
-      const text = await navigator.clipboard.readText();
-      if (text) {
-        setUrl(text);
-      }
+      const clipboardText = await navigator.clipboard.readText();
+      setUrl(clipboardText);
     } catch (err) {
-      console.error('Failed to read clipboard contents: ', err);
+      setError('Unable to access clipboard. Please paste manually.');
     }
   };
-  
-  // Get icon based on URL type
-  const getURLTypeIcon = () => {
-    switch (urlType) {
-      case 'youtube':
-        return <YouTubeIcon color="error" />;
+
+  const clearURL = () => {
+    setUrl('');
+    setPreview(null);
+    setShowPreview(false);
+    setError(null);
+    setSuccessMessage(null);
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'video':
+        return <Youtube className="w-5 h-5 text-red-500" />;
       case 'article':
-        return <ArticleIcon color="primary" />;
-      case 'webpage':
-        return <InsertLinkIcon color="action" />;
+        return <FileText className="w-5 h-5 text-blue-500" />;
       default:
-        return <LinkIcon />;
+        return <Globe className="w-5 h-5 text-green-500" />;
     }
   };
-  
+
   return (
-    <Box sx={{ width: '100%' }}>
-      <Paper
-        elevation={2}
-        sx={{
-          borderRadius: 4,
-          p: 3,
-          transition: 'all 0.3s ease',
-          position: 'relative',
-          overflow: 'hidden',
-          '&:hover': {
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
-          },
-          '&::before': isValidURL ? {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '4px',
-            backgroundColor: urlType === 'youtube' ? '#FF0000' : 
-                            urlType === 'article' ? '#6750A4' : '#4285F4',
-            transition: 'background-color 0.3s ease'
-          } : {}
-        }}
-      >
-        <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
-          Import Content from URL
-        </Typography>
-        
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Enter a YouTube video URL, article link, or any webpage to extract and analyze its content.
-        </Typography>
-        
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-          <TextField
-            fullWidth
-            placeholder="https://example.com/article"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            InputProps={{
-              startAdornment: urlType && (
-                <Box 
-                  sx={{ 
-                    mr: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    animation: 'fadeIn 0.3s ease',
-                    '@keyframes fadeIn': {
-                      from: { opacity: 0 },
-                      to: { opacity: 1 }
-                    }
-                  }}
-                >
-                  {getURLTypeIcon()}
-                </Box>
-              ),
-              endAdornment: url && (
-                <IconButton 
-                  size="small" 
-                  onClick={handleReset}
-                  sx={{ 
-                    animation: 'fadeIn 0.2s ease',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      transform: 'rotate(90deg)',
-                    }
-                  }}
-                >
-                  <ClearIcon fontSize="small" />
-                </IconButton>
-              ),
-              sx: {
-                pr: 1,
-                borderRadius: 10,
-                transition: 'all 0.3s ease',
-                backgroundColor: 'background.default',
-                '&.Mui-focused': {
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                }
-              }
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 10,
-              },
-            }}
-          />
-          
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={handlePaste}
-            startIcon={<ContentPasteIcon />}
-            sx={{
-              height: 56,
-              whiteSpace: 'nowrap',
-              borderRadius: 10,
-              px: 2,
-              borderWidth: 2,
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                borderWidth: 2,
-                transform: 'translateY(-2px)',
-              }
-            }}
-          >
-            Paste
-          </Button>
-        </Box>
-        
-        {/* Validation error */}
-        <Collapse in={!!validationError}>
-          <Alert 
-            severity="error" 
-            sx={{ 
-              mt: 2, 
-              borderRadius: 2,
-              animation: 'fadeIn 0.3s ease'
-            }}
-          >
-            {validationError}
-          </Alert>
-        </Collapse>
-        
-        {/* URL Types Chips */}
-        <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
-          <Chip 
-            icon={<YouTubeIcon />} 
-            label="YouTube" 
-            variant={urlType === 'youtube' ? 'filled' : 'outlined'} 
-            color={urlType === 'youtube' ? 'error' : 'default'}
-            sx={{ 
-              transition: 'all 0.3s ease',
-              transform: urlType === 'youtube' ? 'scale(1.05)' : 'scale(1)',
-            }}
-          />
-          <Chip 
-            icon={<ArticleIcon />} 
-            label="Articles" 
-            variant={urlType === 'article' ? 'filled' : 'outlined'} 
-            color={urlType === 'article' ? 'primary' : 'default'}
-            sx={{ 
-              transition: 'all 0.3s ease',
-              transform: urlType === 'article' ? 'scale(1.05)' : 'scale(1)',
-            }}
-          />
-          <Chip 
-            icon={<InsertLinkIcon />} 
-            label="Webpages" 
-            variant={urlType === 'webpage' ? 'filled' : 'outlined'} 
-            color={urlType === 'webpage' ? 'info' : 'default'}
-            sx={{ 
-              transition: 'all 0.3s ease',
-              transform: urlType === 'webpage' ? 'scale(1.05)' : 'scale(1)',
-            }}
-          />
-        </Box>
-        
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-          <Button
-            variant="text"
-            color="primary"
-            disabled={!isValidURL || isProcessing}
-            startIcon={<PreviewIcon />}
-            onClick={generatePreview}
-            sx={{
-              borderRadius: 10,
-              textTransform: 'none',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                background: 'rgba(103, 80, 164, 0.08)',
-              }
-            }}
-          >
-            Generate Preview
-          </Button>
-          
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!isValidURL || !preview}
-            endIcon={isProcessing ? <CircularProgress size={16} color="inherit" /> : <SendIcon />}
-            onClick={handleSubmit}
-            sx={{
-              borderRadius: 10,
-              px: 3,
-              textTransform: 'none',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: '0 6px 16px rgba(0, 0, 0, 0.15)',
-              }
-            }}
-          >
-            {isProcessing ? 'Processing...' : preview ? 'Process Content' : 'Extract URL'}
-          </Button>
-        </Box>
-      </Paper>
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm">
+      <div className="flex items-center gap-2 mb-4">
+        <Link className="w-5 h-5 text-purple-500" />
+        <h2 className="font-medium text-gray-800 dark:text-gray-200">URL Input</h2>
+      </div>
       
-      {/* URL Preview */}
-      {showPreview && preview && (
-        <Grow in={showPreview}>
-          <Paper
-            elevation={3}
-            sx={{
-              mt: 3,
-              borderRadius: 4,
-              overflow: 'hidden',
-              transition: 'all 0.3s ease',
-              transform: 'translateY(0)',
-              animation: 'slideUp 0.4s ease',
-              '@keyframes slideUp': {
-                from: { opacity: 0, transform: 'translateY(20px)' },
-                to: { opacity: 1, transform: 'translateY(0)' }
-              }
-            }}
-          >
-            {preview.imageUrl && (
-              <Box
-                sx={{
-                  height: 200,
-                  backgroundImage: `url(${preview.imageUrl})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  position: 'relative',
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: '40%',
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0))',
-                  }
-                }}
-              >
-                {preview.type === 'youtube' && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      width: 60,
-                      height: 60,
-                      borderRadius: '50%',
-                      backgroundColor: 'rgba(255,0,0,0.8)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255,0,0,1)',
-                        transform: 'translate(-50%, -50%) scale(1.1)',
-                      },
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    <YouTubeIcon sx={{ fontSize: 32, color: 'white' }} />
-                  </Box>
-                )}
-              </Box>
-            )}
-            
-            <Box sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                    {preview.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" paragraph>
-                    {preview.description}
-                  </Typography>
-                </Box>
-                
-                <Chip
-                  icon={
-                    preview.type === 'youtube' ? <YouTubeIcon /> : 
-                    preview.type === 'article' ? <ArticleIcon /> : <InsertLinkIcon />
-                  }
-                  label={preview.source}
-                  size="small"
-                  color={
-                    preview.type === 'youtube' ? 'error' : 
-                    preview.type === 'article' ? 'primary' : 'default'
-                  }
-                  sx={{ 
-                    borderRadius: 8,
-                    animation: 'fadeIn 0.5s ease',
-                    fontWeight: 600
-                  }}
-                />
-              </Box>
-              
-              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                <Box 
-                  sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    gap: 0.5,
-                    color: 'success.main',
-                    animation: 'fadeIn 0.8s ease',
-                  }}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="relative">
+          <div className="flex">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={url}
+                onChange={handleURLChange}
+                placeholder="Enter URL (e.g., https://example.com)"
+                className={`w-full px-4 py-3 pr-10 rounded-l-lg border-y border-l focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                  error 
+                    ? 'border-red-300 focus:border-red-300 focus:ring-red-200 dark:border-red-600 dark:focus:ring-red-900'
+                    : isValid 
+                      ? 'border-green-300 focus:border-green-300 focus:ring-green-200 dark:border-green-600 dark:focus:ring-green-900'
+                      : 'border-gray-300 focus:border-blue-300 focus:ring-blue-200 dark:border-gray-600 dark:focus:ring-blue-900'
+                } dark:bg-gray-800 text-gray-800 dark:text-gray-200`}
+              />
+              {url && (
+                <button 
+                  type="button" 
+                  onClick={clearURL}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
-                  <CheckCircleIcon fontSize="small" />
-                  <Typography variant="body2" fontWeight={500}>
-                    Content validated
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          </Paper>
-        </Grow>
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            
+            <button
+              type="button"
+              onClick={handlePaste}
+              className="px-3 border-y border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+              title="Paste from clipboard"
+            >
+              <Clipboard className="w-4 h-4" />
+            </button>
+            
+            <button
+              type="submit"
+              disabled={!isValid || isProcessing}
+              className={`px-4 py-2 rounded-r-lg flex items-center ${
+                isValid && !isProcessing
+                  ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                  : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+              } transition-colors`}
+            >
+              {isProcessing ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Processing</span>
+                </div>
+              ) : showPreview ? (
+                <Send className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+          
+          {error && (
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
+          )}
+        </div>
+        
+        {successMessage && (
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-400 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+            <CheckCircle className="w-4 h-4" />
+            {successMessage}
+          </div>
+        )}
+        
+        {/* URL Preview */}
+        {showPreview && preview && (
+          <div className="mt-4 bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all duration-300 ease-in-out">
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                {getTypeIcon(preview.type)}
+                <span className="text-xs text-gray-500 dark:text-gray-400">{preview.source}</span>
+              </div>
+              
+              <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-1">{preview.title}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{preview.description}</p>
+              
+              <div className="flex justify-between items-center">
+                <a 
+                  href={url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-sm text-purple-600 dark:text-purple-400 flex items-center gap-1 hover:underline"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Visit original
+                </a>
+                
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded-md flex items-center gap-1.5 transition-colors"
+                >
+                  <Send className="w-3 h-3" />
+                  Process content
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </form>
+      
+      {/* Recent URLs */}
+      {recentURLs.length > 0 && (
+        <div className="mt-6">
+          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Recent URLs</h3>
+          <div className="space-y-2">
+            {recentURLs.map((recentUrl, index) => (
+              <div 
+                key={index} 
+                className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700 rounded-lg"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <Globe className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                  <span className="text-sm text-gray-600 dark:text-gray-400 truncate">{recentUrl}</span>
+                </div>
+                <button 
+                  onClick={() => setUrl(recentUrl)}
+                  className="ml-2 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

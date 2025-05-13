@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Roboto, Roboto_Mono } from "next/font/google";
-import { ThemeContextProvider } from './theme/ThemeContext';
+import TailwindThemeProvider from './theme/TailwindThemeProvider';
 import "./globals.css";
 
 const inter = Inter({
@@ -41,7 +41,7 @@ export default function RootLayout({
           minHeight: '100vh',
         }}
       >
-        <ThemeContextProvider>
+        <TailwindThemeProvider>
         <div 
           style={{
             content: '\'\''as any,
@@ -56,7 +56,7 @@ export default function RootLayout({
           }}
         />
         {children}
-        </ThemeContextProvider>
+        </TailwindThemeProvider>
       </body>
     </html>
   );

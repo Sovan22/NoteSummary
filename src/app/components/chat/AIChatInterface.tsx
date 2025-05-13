@@ -8,8 +8,6 @@ import {
   TextField, 
   IconButton,
   Avatar,
-  Divider,
-  Chip,
   CircularProgress,
   Fab,
   InputAdornment
@@ -36,14 +34,12 @@ interface Message {
 
 interface AIChatInterfaceProps {
   contentTitle?: string;
-  contentId?: string;
   initialMessages?: Message[];
   onSendMessage?: (message: string) => Promise<void>;
 }
 
 export default function AIChatInterface({
   contentTitle = "AI Assistant",
-  contentId,
   initialMessages = [],
   onSendMessage
 }: AIChatInterfaceProps) {
